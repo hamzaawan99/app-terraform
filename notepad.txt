@@ -1,0 +1,18 @@
+<powershell>
+New-Item -ItemType "file" -Path "c:\test.txt", "c:\test.log"
+New-Item -ItemType "file" -Path "c:\newtest.txt", "c:\newtest.log"
+Get-WindowsOptionalFeature -Online | Where-Object {$_.FeatureName -like "IIS*"} | Format-Table
+Enable-WindowsOptionalFeature -Online -FeatureName "IIS-DefaultDocument" -All
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+$npp = Invoke-WebRequest -UseBasicParsing 'https://api.github.com/repos/notepad-plus-plus/notepad-plus-plus/releases/latest' | ConvertFrom-Json
+$dlUrl = $npp.assets[6].browser_download_url
+$outfile = $npp.assets[6].name
+$cwd = (Get-Location).Path
+$installerPath = Join-Path $cwd $outfile
+Write-Output "Silently Installing $($npp.name)... Please wait..." | Out-File -FilePath c:\newtest.txt -Append
+Invoke-WebRequest -UseBasicParsing $dlUrl -OutFile $installerPath
+Move-Item -Path $installerPath -Destination C:\
+Start-Process -FilePath "C:\$outfile" -Args "/S" -Verb RunAs -Wait
+Write-Output $installerPath | Out-File -FilePath c:\newtest.txt -Append
+Install-WindowsFeature NET-Framework-Features
+</powershell>
